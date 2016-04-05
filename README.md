@@ -14,6 +14,15 @@ I have also chosen to use two useful libraries from .jar files (need to be inclu
 * ./src/ReadAndCleanTweet.java
 * ./src/GraphEdge.java
 * ./src/MainClass.java  - Get average degree of all hashtags and write to graph.
+
+**Running the project**
+Please make sure the JAVA_HOME and PATH variables are set.
+run.sh contains both the compiling (javac) and executing (java) commands.
+If the compilation fails using the script, please execute both lines of the script separately from
+the command line.
+
+In order to make the tests in run_tests.sh pass, the class files and jar files were placed in the src folder.
+
 						  
 **Global Data Structures**
 
