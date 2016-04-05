@@ -182,7 +182,18 @@ For every line in the input file tweets.txt
   
   oldestTweetCopy = oldestTweet 
   
-  oldestTweet = latest expired timestamp + 1 (update oldestTweet)
+  oldestPossibleAllowedTweet = latest expired timestamp + 1 
+  
+delta= number of seconds between oldestPossibleAllowedTweet and newewstTweet
+  
+**for(i=0; i<=delta; i++)
+	if oldestPossibleAllowedTweet+i exists in edgesCreatedAtMap
+            
+		oldestTweet=oldestPossibleAllowedTweet+i
+        	
+		break out of loop (This ensures the oldesTweet corresponds to the oldest allowed timestamp PRESENT rather than the oldest ALLOWED timestamp)
+
+  end for
   
   diff = number of seconds between latest expired timestamp and oldestTweetCopy
   
