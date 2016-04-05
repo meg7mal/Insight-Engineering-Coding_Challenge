@@ -152,6 +152,8 @@ For every line in the input file tweets.txt
 
   For every unique pair of DIFFERENT hashtags 
 	Insert the pair into the edgesCreatedAtMap
+		If pair doesn't already exist in the graph, add the edge and timestamp to edgeLatestTimestamp
+		else update the existing timestamp in edgeLatestTimestamp (if it HAS NOT arrived out of order)
 	call insertIntoHashTagGraph
 	
   * function: insertIntoHashTagGraph
@@ -186,19 +188,20 @@ For every line in the input file tweets.txt
   
   **for(i=0; i<=diff; i increments by seconds)
 	
-		**For all edges in edgesCreatedAtMap for the timestamp at oldestTweetCopy +i second
+		**For all edges in edgesCreatedAtMap for the timestamp at oldestTweetCopy +i seconds
 		
-		if there is at least one edge (nodes[0],nodes[1])   (An edge is represented by wrapper class GraphEdge which has a "nodes" array of size 2. )
+		if there is at least one edge (nodes[0],nodes[1])   (An edge is represented by wrapper class GraphEdge which has a 			"nodes" array of size 2. )
 		
-			hashtagGraph.remove(v1,v2)
-			hashtagGraph.remove(v2,v1)  (We make sure that array [v1,v2] removes v2 from v1's connected hashtags and vice versa)
+			if(timestamp at oldestTweetCopy +i seconds is equal to the latest timestamp for the edge v1,v2) 
+				hashtagGraph.remove(v1,v2)
+				hashtagGraph.remove(v2,v1)  (We make sure that array [v1,v2] removes v2 from v1's connected hashtags 					and vice versa)
 		
 				
-			update degrees of both v1 and v2 in degreeMap if needed.
+				update degrees of both v1 and v2 in degreeMap if needed.
 			
-			update running_degree_total accordingly.
+				update running_degree_total accordingly.
 			
-			if v1's degree becomes 0, remove the entry from degree map. (If all the edges containing a hashtag are removed from hashtag graph, the vertex is autmatically deleted so there is no need to take care of it explicitly. However, since degreeMap is keeping track of degrees to avoid re-calculation by counting hashtags every time, we have to update it.)
+			if v1's degree becomes 0, remove the entry from degree map. (If all the edges containing a hashtag are removed 			from hashtag graph, the vertex is autmatically deleted so there is no need to take care of it explicitly. However, 				since degreeMap is keeping track of degrees to avoid re-calculation by counting hashtags every time, we 				have to update it.)
 			
 			
 			
@@ -208,7 +211,7 @@ For every line in the input file tweets.txt
 			
 			
   
-    Delete entry for oldestTweetCopy +i second (if present)    
+    	Delete entry for oldestTweetCopy +i second (if present)    
   
     
 
