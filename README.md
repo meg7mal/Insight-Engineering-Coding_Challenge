@@ -146,9 +146,9 @@ For every line in the input file tweets.txt
 	
 **Insertion Pseudocode**
 
-  * function: insertIntoDateEdgeGraph
-  * Parameters:  the current timestamp, the unique hashtags in the current tweet as an array
-  * Return:void
+  * **function: insertIntoDateEdgeGraph**
+  * **Parameters:  the current timestamp, the unique hashtags in the current tweet as an array**
+  * **Return:void**
 
   For every unique pair of DIFFERENT hashtags 
 	Insert the pair into the edgesCreatedAtMap
@@ -156,9 +156,9 @@ For every line in the input file tweets.txt
 		else update the existing timestamp in edgeLatestTimestamp (if it HAS NOT arrived out of order)
 	call insertIntoHashTagGraph
 	
-  * function: insertIntoHashTagGraph
-  * Parameters: A pair of hashtag strings representing a graph edge (v1,v2)
-  * Return: void
+  * **function: insertIntoHashTagGraph**
+  * **Parameters: A pair of hashtag strings representing a graph edge (v1,v2)**
+  * **Return: void**
 
   If graph does NOT contain (v1,v2) already
 	put the edge in hashtagGraph
@@ -174,9 +174,9 @@ For every line in the input file tweets.txt
   
 **Eviction Pseudocode**
 
-* function: evictOldNodes
-* Parameters: none
-* Return: void
+* **function: evictOldNodes**
+* **Parameters: none**
+* **Return: void**
   
   latest expired timestamp = newestTweet - 61
   
