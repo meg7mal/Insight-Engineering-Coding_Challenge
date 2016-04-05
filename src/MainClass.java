@@ -25,6 +25,7 @@ public class MainClass {
 	public static HashMultimap<LocalDateTime,GraphEdge>edgesCreatedAtMap=HashMultimap.create();
 	public static HashMultimap<String,String>hashtagGraph=HashMultimap.create();
 	public static HashMap<String,Integer>degreeMap=new HashMap<String,Integer>();
+	public static HashMap<GraphEdge, LocalDateTime>edgeLatestTimestamp = new HashMap<GraphEdge, LocalDateTime>();
 	
 	public static void main(String[] args) throws IOException, ParseException, java.text.ParseException{
 		
@@ -48,6 +49,8 @@ public class MainClass {
 	  		 		
 			  		 	    //for every line add a variable number of map entries
 			  		 	    LocalDateTime created_at=ReadAndCleanTweet.getCreatedAt(line);
+			  		 	    
+			  		 	    
 			  		 	    
 			  		 	    String []hashTags=ReadAndCleanTweet.getHashTags(line);
 			  		 	    
@@ -74,7 +77,9 @@ public class MainClass {
 				  		 		   if(diff<=61)
 				  		 			insertIntoDateEdgeGraph(created_at,hashTags);
 				  		 			   
-				  		 		   
+				  		 		   if(created_at.isBefore(oldestTweet))
+				  		 				   oldestTweet=created_at;
+				  		 			   
 				  		 		   
 				  		 		   
 				  		 	   }
@@ -97,10 +102,13 @@ public class MainClass {
 					  		 				running_degree_total=0;
 					  		 				running_hashtag_total=0;
 					  		 				running_mean=0;
-					  		 				
+					  		 				oldestTweet=created_at;
+						  		 			newestTweet=created_at;
+					  		 				insertIntoDateEdgeGraph(created_at,hashTags);
 					  		 			}
 					  		 			else
-					  		 			{
+					  		 			{   
+					  		 				newestTweet=created_at;
 					  		 				evictOldNodes();
 					  		 				insertIntoDateEdgeGraph(created_at,hashTags);
 					  		 			}
@@ -120,14 +128,14 @@ public class MainClass {
 			  		 	 out.println(String.format("%.2f", running_mean));
 	  		 		     }
 			  		 	    
-			  		 	 if(created_at!=null)  
+			  		 	 else if(created_at!=null && hashTags.length<=1)  //only 0 or 1 hashtags in tweet. We do nothing for tweets that have {"limit": etc
 			  		 	{  
 //			  		 		if(running_hashtag_total!=0)
 //			  		 		{	
 //			  		 		running_mean=running_degree_total/running_hashtag_total;
 //					    	out.println("Running mean "+running_mean);
 //			  		 		}
-			  		 		out.println(String.format("%.2f", running_mean)); // no nodes
+			  		 		out.println(String.format("%.2f", running_mean)); 
 			  		 	}   
 	  		 		  
 	  		 		  //}
@@ -147,6 +155,8 @@ public class MainClass {
 	  	 
 	      
 	  		 	out.close();	
+	  		 	
+	  		 	
 	
 } // main
 	
@@ -162,6 +172,12 @@ public static void insertIntoDateEdgeGraph(LocalDateTime created_at, String []ha
  			 {
  				Map.Entry<LocalDateTime, GraphEdge> edgeAddedAt=ReadAndCleanTweet.edgeAddedAt(created_at,hashTags[x],hashTags[y]);
  				edgesCreatedAtMap.put(edgeAddedAt.getKey(),edgeAddedAt.getValue());
+ 				//Record the timestamp for the edge. Make sure to update the latest timestamp for a hashtag pair or edge if it is already in the graph.
+ 				if(!edgeLatestTimestamp.containsKey(edgeAddedAt.getValue()) || 
+ 					(edgeLatestTimestamp.containsKey(edgeAddedAt.getValue())&&!created_at.isBefore(edgeLatestTimestamp.get(edgeAddedAt.getValue()))))
+ 					
+ 					edgeLatestTimestamp.put(edgeAddedAt.getValue(),edgeAddedAt.getKey()); //edge (value) is now the key and timestamp (key) is now the value in this map.
+ 				
  				insertIntoHashTagGraph(hashTags[x],hashTags[y]);
  			 }
  		 }
@@ -205,7 +221,18 @@ public static void evictOldNodes()
 	
 	LocalDateTime latestExpired= newestCopy.minusSeconds(61);
 	
-	 
+	LocalDateTime oldestPossibleAllowedTweet=latestExpired.plusSeconds(1); 
+	
+	long delta = Duration.between(oldestPossibleAllowedTweet, newestTweet).getSeconds();
+	
+	for(long x=0; x<=delta; x++)
+	{
+		if(edgesCreatedAtMap.containsKey(oldestPossibleAllowedTweet.plusSeconds(x))!=false)
+		{
+			oldestTweet=oldestPossibleAllowedTweet.minusSeconds(x);
+			break;
+		}
+	}
 	
 	long diff=Duration.between(oldestCopy, latestExpired).getSeconds();
 	
@@ -227,41 +254,49 @@ public static void evictOldNodes()
 					 String v1=edges_to_delete[x].nodes[0];
 					 String v2=edges_to_delete[x].nodes[1];
 					 
-					 //remove edges
-					 hashtagGraph.remove(v1, v2);
-					 hashtagGraph.remove(v2, v1);
-					 
-					 //update degrees
-					 Integer new_degree_of_v1=degreeMap.get(v1)-1;  // hashtagGraph.get(v1).size(); 
-					 running_degree_total-=1;
-					 if(new_degree_of_v1==0)
+					 //remove edges for an expired timestamp. If an edge was added later again in a non-expired tweet, do not remove it.
+					 LocalDateTime latest_timestamp_of_edge=edgeLatestTimestamp.get(edges_to_delete[x]);
+					 if(oldestCopy.plusSeconds(i).isEqual(latest_timestamp_of_edge))
 					 {
-						 degreeMap.remove(v1);
-					 }
-					 else
-					 {
-						 degreeMap.put(v1,new_degree_of_v1);
+						 hashtagGraph.remove(v1, v2);
+						 hashtagGraph.remove(v2, v1);
+						 
+						 
+						 //update degrees
+						 Integer new_degree_of_v1=hashtagGraph.get(v1).size();//degreeMap.get(v1)-1;  //  
+						 running_degree_total-=1;
+						 if(new_degree_of_v1==0)
+						 {
+							 degreeMap.remove(v1);
+						 }
+						 else
+						 {  
+							 degreeMap.put(v1,new_degree_of_v1);
+						 }
+						 
+						 Integer new_degree_of_v2=hashtagGraph.get(v1).size();//degreeMap.get(v2)-1;
+						 running_degree_total-=1;
+						 if(new_degree_of_v2==0)
+						 {
+							 degreeMap.remove(v2);
+						 }
+						 else
+						 {
+							 degreeMap.put(v2,new_degree_of_v2);
+						 }
+						 running_hashtag_total=degreeMap.size();
 					 }
 					 
-					 Integer new_degree_of_v2=degreeMap.get(v2)-1;
-					 running_degree_total-=1;
-					 if(new_degree_of_v2==0)
-					 {
-						 degreeMap.remove(v2);
-					 }
-					 else
-					 {
-						 degreeMap.put(v2,new_degree_of_v2);
-					 }
 					 
-					 //remove edges from edgesCreatedAtMap
-					 
-					 edgesCreatedAtMap.remove(currentDateTime, edges_to_delete[x]);
-					 running_hashtag_total=degreeMap.size();
 				 
 				 }
 			   
 			 }
+			//remove edges from edgesCreatedAtMap
+			 
+			 edgesCreatedAtMap.removeAll(currentDateTime);
+			 if(edgesCreatedAtMap.size()==0)
+				 System.out.println(newestTweet+" "+oldestTweet);
 		 }
   }
 }
