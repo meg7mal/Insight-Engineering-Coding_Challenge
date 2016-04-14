@@ -6,7 +6,7 @@ library to deal with dates and times called java.time (based on Joda time).
 I have also chosen to use two useful libraries from .jar files (need to be included in classpath)
 * guava-19.0.jar : Primarily for the class com.google.common.collect.HashMultimap which provides a convenient Java Collection
 				   to store our global data structures.
-* json.simple.1.1.1.jar : Primarily for the simple JSON parson provided which we can use to extract the "created_at", "entities"
+* json.simple.1.1.1.jar : Primarily for the simple JSON parser provided which we can use to extract the "created_at", "entities"
                           "hashtags" fields from the input file for processing.
 
 **Files**
@@ -27,11 +27,11 @@ In order to make the tests in run_tests.sh pass, the class files and jar files w
 **Global Data Structures**
 
 
-* HashMultimap<LocalDateTime,GraphEdge>edgesCreatedAtMap - A map of the "created_at" timestamp to every unique hashtag edge (pair of hashtags)
-														   added at that timestamp (could be shared by multimple tweets).
+* HashMultimap (LocalDateTime,GraphEdge) edgesCreatedAtMap - A map of the "created_at" timestamp to every unique hashtag edge (pair of hashtags)
+														   added at that timestamp (could be shared by multiple tweets).
 														   key="created_at" from JSON tweet value=All edges from all tweets added at this instatnt.
 														   
-* HashMultimap<String,String>hashtagGraph -  The hashtag graph is implemented as a HashMultimap. The key is a hashtag and the value will be a set of all the hashtags it is connected to in the graph. 
+* HashMultimap (String,String) hashtagGraph -  The hashtag graph is implemented as a HashMultimap. The key is a hashtag and the value will be a set of all the hashtags it is connected to in the graph. 
 										     
                          Ex: key=h1 value=[h2,h3,h4]
 										     However interally, the pairs are stored as:
@@ -42,7 +42,7 @@ In order to make the tests in run_tests.sh pass, the class files and jar files w
 										     This allows us to insert one edge (hashtag pair) at a time into the graph rather than have to collect
 										     all connected hashtags a particular hashtag is connected to in a set.
 
-* HashMap<String,Integer>degreeMap        -  This is a map of a hashtag to its degree count. By querying the size of this map, we also get the
+* HashMap (String,Integer) degreeMap        -  This is a map of a hashtag to its degree count. By querying the size of this map, we also get the
 										     running_hashtag_total.
 
 * oldestTweet - The timestamp of the oldest tweet
@@ -204,15 +204,15 @@ delta= number of seconds between oldestPossibleAllowedTweet and newewstTweet
 
   end for
   
-  diff = number of seconds between latest expired timestamp and oldestTweetCopy
+  diff = number of seconds between latest expired timestamp and oldestTweet
   
   **for(i=0; i<=diff; i increments by seconds)
 	
-		**For all edges in edgesCreatedAtMap for the timestamp at oldestTweetCopy +i seconds
+		**For all edges in edgesCreatedAtMap for the timestamp at oldestTweet +i seconds
 		
 		if there is at least one edge (nodes[0],nodes[1])   (An edge is represented by wrapper class GraphEdge which has a 			"nodes" array of size 2. )
 		
-			if(timestamp at oldestTweetCopy +i seconds is equal to the latest timestamp for the edge v1,v2) 
+			if(timestamp at oldestTweet +i seconds is equal to the latest timestamp for the edge v1,v2) 
 				hashtagGraph.remove(v1,v2)
 				hashtagGraph.remove(v2,v1)  (We make sure that array [v1,v2] removes v2 from v1's connected hashtags 					and vice versa)
 		
