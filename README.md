@@ -53,7 +53,7 @@ In order to make the tests in run_tests.sh pass, the class files and jar files w
 
 **Optimizations**
 
-We use the greedy technique to keep track of the degrees of every hashtag as edeges are added or removed. 
+We use the dynamic programming technique to keep track of the degrees of every hashtag as edeges are added or removed. 
 
 We also keep a running_degree_total and increment it or decrement it only when a hashtag's degree is updated.
 Similary, we keep a running_hashtag_total.
